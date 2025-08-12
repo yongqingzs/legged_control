@@ -1,6 +1,9 @@
+# Legged Control 构建和启动文档
 ## build
 clone
 ```bash
+# ubuntu20.04
+# ros: noetic
 mkdir -p ~/noetic_ws/src 
 cd ~/noetic_ws/src
 git clone https://github.com/qiayuanl/legged_control.git
@@ -64,12 +67,12 @@ angular:
 # 切换为1
 ```
 
-控制1
+控制方式1
 ```bash
 rosrun teleop_twist_keyboard teleop_twist_keyboard.py
 ```
 
-控制2
+控制方式2
 ```bash
 # 暂停
 rostopic pub /cmd_vel geometry_msgs/Twist "linear:
@@ -101,3 +104,6 @@ angular:
   y: 0.0
   z: 1" -r 10
 ```
+
+demo:
+![](demo.gif)
