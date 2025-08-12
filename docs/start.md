@@ -25,6 +25,9 @@ catkin build ocs2_legged_robot_ros ocs2_self_collision_visualization -j4
 # simu
 catkin build legged_controllers legged_unitree_description -j4
 catkin build legged_gazebo -j4
+
+# keyboard
+sudo apt-get install ros-noetic-teleop-twist-keyboard
 ```
 
 ## start
@@ -56,4 +59,45 @@ angular:
   x: 0.0
   y: 0.0
   z: 0.0" -r 10
+
+# gait
+# 切换为1
+```
+
+控制1
+```bash
+rosrun teleop_twist_keyboard teleop_twist_keyboard.py
+```
+
+控制2
+```bash
+# 暂停
+rostopic pub /cmd_vel geometry_msgs/Twist "linear:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+angular:
+  x: 0.0
+  y: 0.0
+  z: 0.0" -r 10
+
+# 前进
+rostopic pub /cmd_vel geometry_msgs/Twist "linear:
+  x: 0.5
+  y: 0.0
+  z: 0.0
+angular:
+  x: 0.0
+  y: 0.0
+  z: 0.0" -r 10
+
+# 转弯
+rostopic pub /cmd_vel geometry_msgs/Twist "linear:
+  x: 0.5
+  y: 0.0
+  z: 0.0
+angular:
+  x: 0.0
+  y: 0.0
+  z: 1" -r 10
 ```
