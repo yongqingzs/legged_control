@@ -106,4 +106,4 @@ angular:
 ```
 
 demo:
-![](demo.gif)
+![](resources/demo.gif)

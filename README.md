@@ -164,7 +164,7 @@ rosrun rqt_controller_manager rqt_controller_manager
 
 The system framework diagram is shown below.
 
-![](docs/system_diagram.png)
+![](docs/resources/system_diagram.png)
 
 - The robot torso's desired velocity or position goal is converted to state trajectory and then sent to the NMPC;
 - The NMPC will evaluate an optimized system state and input.
@@ -224,7 +224,7 @@ subproblem is solved using HPIPM. For more details [2, 3]
 
 ### WBC
 
-![](docs/tasks.png)
+![](docs/resources/tasks.png)
 
 WBC only considers the current moment. Several tasks are defined in the table above. Each task is the equality
 constraints or inequality constraints on decision variables. The decision variables of WBC are:

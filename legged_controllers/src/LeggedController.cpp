@@ -61,6 +61,8 @@ bool LeggedController::init(hardware_interface::RobotHW* robot_hw, ros::NodeHand
     contactHandles_.push_back(contactInterface->getHandle(name));
   }
   imuSensorHandle_ = robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("base_imu");
+  // go2 demo
+  // imuSensorHandle_ = robot_hw->get<hardware_interface::ImuSensorInterface>()->getHandle("unitree_imu");
 
   // State estimation
   setupStateEstimate(taskFile, verbose);
@@ -101,6 +103,7 @@ void LeggedController::starting(const ros::Time& time) {
 void LeggedController::update(const ros::Time& time, const ros::Duration& period) {
   // State Estimate
   updateStateEstimation(time, period);
+  // ROS_WARN("%f",hybridJointHandles_[2].getPosition());
 
   // Update the current state of the system
   mpcMrtInterface_->setCurrentObservation(currentObservation_);
@@ -130,6 +133,8 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
     ROS_ERROR_STREAM("[Legged Controller] Safety check failed, stopping the controller.");
     stopRequest(time);
   }
+  // float joint_kd_list[12]={4,1,10,4,1,10,4,1,10,4,1,10};
+  // float joint_kp_list[12]={0,0,0,0,0,0,0,0,0,0,0,0};
 
   for (size_t j = 0; j < leggedInterface_->getCentroidalModelInfo().actuatedDofNum; ++j) {
     hybridJointHandles_[j].setCommand(posDes(j), velDes(j), 0, 3, torque(j));
