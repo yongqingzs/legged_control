@@ -107,3 +107,12 @@ angular:
 
 demo:
 ![](resources/demo.gif)
+
+
+迁移至go2：
+- fork
+- urdf、dae 来自 https://github.com/unitreerobotics/unitree_ros/tree/master/robots/go2_description
+- 动力学模型通过 pinocchio 构建
+- 未修改 mpc: Q/R ; wbc: kp/kd .. 等可调参数，控制律参数来自 go1
+- demo:
+![](resources/demo1.gif)
