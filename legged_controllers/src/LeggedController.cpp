@@ -80,6 +80,7 @@ void LeggedController::starting(const ros::Time& time) {
   // Initial state
   currentObservation_.state.setZero(leggedInterface_->getCentroidalModelInfo().stateDim);
   updateStateEstimation(time, ros::Duration(0.002));
+  controller_time = time.toSec();
   currentObservation_.input.setZero(leggedInterface_->getCentroidalModelInfo().inputDim);
   currentObservation_.mode = ModeNumber::STANCE;
 
@@ -132,7 +133,7 @@ void LeggedController::update(const ros::Time& time, const ros::Duration& period
   }
 
   for (size_t j = 0; j < leggedInterface_->getCentroidalModelInfo().actuatedDofNum; ++j) {
-    hybridJointHandles_[j].setCommand(posDes(j), velDes(j), 0, 3, torque(j));
+    hybridJointHandles_[j].setCommand(posDes(j), velDes(j), 0, 1, torque(j));
   }
 
   // Visualization
@@ -155,8 +156,12 @@ void LeggedController::updateStateEstimation(const ros::Time& time, const ros::D
     jointPos(i) = hybridJointHandles_[i].getPosition();
     jointVel(i) = hybridJointHandles_[i].getVelocity();
   }
+
   for (size_t i = 0; i < contacts.size(); ++i) {
-    contactFlag[i] = contactHandles_[i].isContact();
+
+    // contactFlag[i] = contactHandles_[i].isContact();
+    contactFlag[i] = leggedInterface_->getSwitchedModelReferenceManagerPtr()->getContactFlags(time.toSec()-controller_time)[i];
+
   }
   for (size_t i = 0; i < 4; ++i) {
     quat.coeffs()(i) = imuSensorHandle_.getOrientation()[i];

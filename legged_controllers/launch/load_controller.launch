@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 
 <launch>
-    <arg name="robot_type" default="$(env ROBOT_TYPE)" doc="Robot type: [a1, aliengo, go1, laikago]"/>
-
+    <arg name="robot_type" default="go1" doc="Robot type: [a1, aliengo, go1, laikago]"/>
+    <arg name="use_js" default="false"/>
     <arg name="cheater" default="false"/>
-
+      <!--$(env ROBOT_TYPE)  -->
     <!-- make the files into global parameters -->
     <param name="urdfFile" value="/tmp/legged_control/$(arg robot_type).urdf"/>
     <param name="taskFile" value="$(find legged_controllers)/config/$(arg robot_type)/task.info"/>
@@ -31,4 +31,8 @@
 
     <node pkg="legged_controllers" type="legged_target_trajectories_publisher" name="legged_robot_target"
           output="screen"/>
+
+   <group if="$(arg use_js)">
+            <include file="$(find legged_controllers)/launch/joy_teleop.launch"/>
+    </group>
 </launch>

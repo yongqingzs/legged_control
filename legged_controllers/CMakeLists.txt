@@ -81,7 +81,7 @@ target_compile_options(legged_target_trajectories_publisher PRIVATE ${OCS2_CXX_F
 #########################
 ###   CLANG TOOLING   ###
 #########################
-find_package(cmake_clang_tools QUIET)
+# find_package(cmake_clang_tools QUIET)
 if (cmake_clang_tools_FOUND)
     message(STATUS "Run clang tooling for target " ${PROJECT_NAME})
     add_clang_tooling(

@@ -1,0 +1,18 @@
+<launch>
+    <arg name="robot_type" default="go1" doc="Robot type: [a1, aliengo, go1, laikago]"/>
+    <arg name="real_robot" default="true" doc="true/false"/>
+
+
+
+    <group if="$(arg real_robot)">
+        <include file="$(find legged_unitree_hw_free)/launch/legged_unitree_hw_free.launch" >
+            <arg name="robot_type" value="$(arg robot_type)"/>
+        </include>
+    </group>
+
+    <group unless="$(arg real_robot)">
+        <include file="$(find legged_unitree_description)/launch/empty_world.launch">
+            <arg name="robot_type" value="$(arg robot_type)"/>
+        </include>
+    </group>
+</launch>
