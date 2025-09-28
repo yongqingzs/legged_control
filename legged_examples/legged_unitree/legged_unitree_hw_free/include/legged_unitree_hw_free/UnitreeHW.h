@@ -1,4 +1,3 @@
-
 //
 // Created by qiayuan on 1/24/22.
 // Modifyied by lz 
@@ -8,6 +7,7 @@
 
 #include <legged_hw/LeggedHW.h>
 #include <fdsc_utils/free_dog_sdk_h.hpp>
+#include <thread>
 
 namespace legged {
 const std::vector<std::string> CONTACT_SENSOR_NAMES = {"RF_FOOT", "LF_FOOT", "RH_FOOT", "LH_FOOT"};
@@ -29,6 +29,12 @@ struct UnitreeImuData {
 class UnitreeHW : public LeggedHW {
  public:
   UnitreeHW() = default;
+  ~UnitreeHW() {
+    stopThread_ = true;
+    if (outputThread_.joinable()) {
+      outputThread_.join();
+    }
+  }
   /** \brief Get necessary params from param server. Init hardware_interface.
    *
    * Get params from param server and check whether these params are set. Load urdf of robot. Set up transmission and
@@ -68,6 +74,8 @@ class UnitreeHW : public LeggedHW {
 
   bool setupContactSensor(ros::NodeHandle& nh);
 
+  void outputValues();  // New function to output read/write values
+
   FDSC::lowCmd lowCmd_;
   FDSC::lowState lowState_;
   FDSC::MotorCmdArray mCmdArr_;
@@ -83,6 +91,9 @@ class UnitreeHW : public LeggedHW {
   ros::Publisher joyPublisher_;
   ros::Time lastPub_;
   std::shared_ptr<FDSC::UnitreeConnection> udp_;
+
+  std::thread outputThread_;  // Thread for periodic output
+  bool stopThread_ = false;   // Flag to stop the thread
 };
 
 }  // namespace legged

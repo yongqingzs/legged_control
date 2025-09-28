@@ -1,4 +1,3 @@
-
 //
 // Created by qiayuan on 1/24/22.
 // Modified by Lz
@@ -30,6 +29,10 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   std::vector<uint8_t> cmd_bytes = lowCmd_.buildCmd(false);
   udp_->send(cmd_bytes);
   joyPublisher_ = root_nh.advertise<sensor_msgs::Joy>("/joy", 10);
+
+  // Start the output thread
+  outputThread_ = std::thread(&UnitreeHW::outputValues, this);
+
   return true;
 }
 
@@ -90,12 +93,12 @@ void UnitreeHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/
     mCmdArr_.motors[i].dq = static_cast<float>(jointData_[i].velDes_);
     mCmdArr_.motors[i].Kp = static_cast<float>(jointData_[i].kp_);
     mCmdArr_.motors[i].Kd = static_cast<float>(jointData_[i].kd_);
-    // ROS_WARN("joint [%d]: q %f",i,mCmdArr_.motors[i].q);
-    // ROS_WARN("joint [%d]: dq %f",i,mCmdArr_.motors[i].dq);
-    // ROS_WARN("joint [%d]: kp %f",i,mCmdArr_.motors[i].Kp);
-    // ROS_WARN("joint [%d]: kd %f",i,mCmdArr_.motors[i].Kd);
-    // ROS_WARN("joint [%d]: tau %f",i,debug_tau_o);
     mCmdArr_.motors[i].tau = static_cast<float>(static_cast<float>(jointData_[i].ff_));
+    // ROS_WARN("Write : joint [%d]: q %f",i,mCmdArr_.motors[i].q);
+    // ROS_WARN("Write : joint [%d]: dq %f",i,mCmdArr_.motors[i].dq);
+    // ROS_WARN("Write : joint [%d]: kp %f",i,mCmdArr_.motors[i].Kp);
+    // ROS_WARN("Write : joint [%d]: kd %f",i,mCmdArr_.motors[i].Kd);
+    // ROS_WARN("Write : joint [%d]: tau %f",i,mCmdArr_.motors[i].tau);
   }
 
     lowCmd_.motorCmd = mCmdArr_;
@@ -185,6 +188,25 @@ void UnitreeHW::updateJoystick(const ros::Time& time) {
   joyMsg.buttons.push_back(keyData.btn.components.select);
   joyMsg.buttons.push_back(keyData.btn.components.start);
   joyPublisher_.publish(joyMsg);
+}
+
+void UnitreeHW::outputValues() {
+  ros::Rate rate(0.5);  // 0.5 Hz = every 2 seconds
+  while (!stopThread_ && ros::ok()) {
+    ROS_WARN("=== Read Values ===");
+    for (int i = 0; i < 12; ++i) {
+      ROS_WARN("Read: joint [%d]: pos %f, vel %f, tau %f", i, jointData_[i].pos_, jointData_[i].vel_, jointData_[i].tau_);
+    }
+    ROS_WARN("Read: IMU ori: [%f, %f, %f, %f]", imuData_.ori_[0], imuData_.ori_[1], imuData_.ori_[2], imuData_.ori_[3]);
+    ROS_WARN("Read: IMU ang_vel: [%f, %f, %f]", imuData_.angularVel_[0], imuData_.angularVel_[1], imuData_.angularVel_[2]);
+    ROS_WARN("Read: IMU lin_acc: [%f, %f, %f]", imuData_.linearAcc_[0], imuData_.linearAcc_[1], imuData_.linearAcc_[2]);
+
+    ROS_WARN("=== Write Values ===");
+    for (int i = 0; i < 12; ++i) {
+      ROS_WARN("Write: joint [%d]: q %f, dq %f, kp %f, kd %f, tau %f", i, mCmdArr_.motors[i].q, mCmdArr_.motors[i].dq, mCmdArr_.motors[i].Kp, mCmdArr_.motors[i].Kd, mCmdArr_.motors[i].tau);
+    }
+    rate.sleep();
+  }
 }
 
 }  // namespace legged
