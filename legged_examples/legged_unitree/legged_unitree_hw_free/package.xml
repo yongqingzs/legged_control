@@ -25,6 +25,9 @@
   <build_depend>fdsc_utils</build_depend>
   <build_export_depend>fdsc_utils</build_export_depend>
   <exec_depend>fdsc_utils</exec_depend>
+  <build_depend>unitree_legged_msgs</build_depend>
+  <build_export_depend>unitree_legged_msgs</build_export_depend>
+  <exec_depend>unitree_legged_msgs</exec_depend>
   <depend>legged_hw</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>

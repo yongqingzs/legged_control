@@ -18,6 +18,7 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   setupImu();
   setupContactSensor(robot_hw_nh);
 
+  root_nh.getParam("enable_send", enableSend_);
 
   udp_ = std::make_shared<FDSC::UnitreeConnection>("LOW_WIRED_DEFAULTS");
 
@@ -29,6 +30,10 @@ bool UnitreeHW::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh) {
   std::vector<uint8_t> cmd_bytes = lowCmd_.buildCmd(false);
   udp_->send(cmd_bytes);
   joyPublisher_ = root_nh.advertise<sensor_msgs::Joy>("/joy", 10);
+
+  // Initialize publishers for low state and low cmd messages
+  lowStatePublisher_ = root_nh.advertise<unitree_legged_msgs::LowState>("/low_state", 10);
+  lowCmdPublisher_ = root_nh.advertise<unitree_legged_msgs::LowCmd>("/low_cmd", 10);
 
   // Start the output thread
   outputThread_ = std::thread(&UnitreeHW::outputValues, this);
@@ -83,6 +88,52 @@ void UnitreeHW::read(const ros::Time& time, const ros::Duration& /*period*/) {
     }
 
     updateJoystick(time);
+
+    // Publish LowState message
+    unitree_legged_msgs::LowState lowStateMsg;
+    // Fill IMU data
+    for (int i = 0; i < 4; ++i) {
+      lowStateMsg.imu.quaternion[i] = imuData_.ori_[i];
+    }
+    for (int i = 0; i < 3; ++i) {
+      lowStateMsg.imu.gyroscope[i] = imuData_.angularVel_[i];
+      lowStateMsg.imu.accelerometer[i] = imuData_.linearAcc_[i];
+    }
+    lowStateMsg.imu.temperature = lowState_.temperature_imu;
+
+    // Fill motor states (only first 12 motors for quadruped)
+    for (int i = 0; i < 12; ++i) {
+      lowStateMsg.motorState[i].mode = lowState_.motorState[i].mode;
+      lowStateMsg.motorState[i].q = lowState_.motorState[i].q;
+      lowStateMsg.motorState[i].dq = lowState_.motorState[i].dq;
+      lowStateMsg.motorState[i].ddq = lowState_.motorState[i].ddq;
+      lowStateMsg.motorState[i].tauEst = lowState_.motorState[i].tauEst;
+      lowStateMsg.motorState[i].q_raw = lowState_.motorState[i].q_raw;
+      lowStateMsg.motorState[i].dq_raw = lowState_.motorState[i].dq_raw;
+      lowStateMsg.motorState[i].ddq_raw = lowState_.motorState[i].ddq_raw;
+      lowStateMsg.motorState[i].temperature = lowState_.motorState[i].temperature;
+    }
+
+    // Fill BMS data (simplified - only include fields that exist)
+    lowStateMsg.bms.version_h = lowState_.version_h;
+    lowStateMsg.bms.version_l = lowState_.version_l;
+    lowStateMsg.bms.bms_status = lowState_.bms_status;
+    // Skip other BMS fields that may not exist in this version
+
+    // Fill foot force data
+    for (int i = 0; i < 4; ++i) {
+      lowStateMsg.footForce[i] = lowState_.footForce[i];
+      lowStateMsg.footForceEst[i] = lowState_.footForceEst[i];
+    }
+
+    // Fill other data (simplified)
+    // lowStateMsg.tick = lowState_.tick;  // Skip if field doesn't exist
+    for (int i = 0; i < 40; ++i) {
+      lowStateMsg.wirelessRemote[i] = lowState_.wirelessRemote[i];
+    }
+    // Skip reserve and crc fields that may have type issues
+
+    lowStatePublisher_.publish(lowStateMsg);
   }
 }
 
@@ -103,7 +154,33 @@ void UnitreeHW::write(const ros::Time& /*time*/, const ros::Duration& /*period*/
 
     lowCmd_.motorCmd = mCmdArr_;
     std::vector<uint8_t> cmdBytes = lowCmd_.buildCmd(false);
-    udp_->send(cmdBytes); 
+    
+    if (enableSend_) {
+      udp_->send(cmdBytes);
+    }
+
+    // Publish LowCmd message
+    unitree_legged_msgs::LowCmd lowCmdMsg;
+    // Fill motor commands (only first 12 motors for quadruped)
+    for (int i = 0; i < 12; ++i) {
+      lowCmdMsg.motorCmd[i].mode = static_cast<uint8_t>(mCmdArr_.motors[i].mode);
+      lowCmdMsg.motorCmd[i].q = mCmdArr_.motors[i].q;
+      lowCmdMsg.motorCmd[i].dq = mCmdArr_.motors[i].dq;
+      lowCmdMsg.motorCmd[i].tau = mCmdArr_.motors[i].tau;
+      lowCmdMsg.motorCmd[i].Kp = mCmdArr_.motors[i].Kp;
+      lowCmdMsg.motorCmd[i].Kd = mCmdArr_.motors[i].Kd;
+    }
+
+    // Fill BMS command (simplified)
+    // lowCmdMsg.bms.off = lowCmd_.bm_s_off;  // Skip if field doesn't exist
+
+    // Fill wireless remote data (copy from lowState as it's typically echoed back)
+    for (int i = 0; i < 40; ++i) {
+      lowCmdMsg.wirelessRemote[i] = lowState_.wirelessRemote[i];
+    }
+    // Skip reserve and crc fields that may have type issues
+
+    lowCmdPublisher_.publish(lowCmdMsg);
 }
 
 bool UnitreeHW::setupJoints() {
@@ -205,6 +282,7 @@ void UnitreeHW::outputValues() {
     for (int i = 0; i < 12; ++i) {
       ROS_WARN("Write: joint [%d]: q %f, dq %f, kp %f, kd %f, tau %f", i, mCmdArr_.motors[i].q, mCmdArr_.motors[i].dq, mCmdArr_.motors[i].Kp, mCmdArr_.motors[i].Kd, mCmdArr_.motors[i].tau);
     }
+
     rate.sleep();
   }
 }

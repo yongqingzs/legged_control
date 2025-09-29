@@ -8,6 +8,8 @@
 #include <legged_hw/LeggedHW.h>
 #include <fdsc_utils/free_dog_sdk_h.hpp>
 #include <thread>
+#include <unitree_legged_msgs/LowState.h>
+#include <unitree_legged_msgs/LowCmd.h>
 
 namespace legged {
 const std::vector<std::string> CONTACT_SENSOR_NAMES = {"RF_FOOT", "LF_FOOT", "RH_FOOT", "LH_FOOT"};
@@ -92,8 +94,12 @@ class UnitreeHW : public LeggedHW {
   ros::Time lastPub_;
   std::shared_ptr<FDSC::UnitreeConnection> udp_;
 
+  ros::Publisher lowStatePublisher_;
+  ros::Publisher lowCmdPublisher_;
+
   std::thread outputThread_;  // Thread for periodic output
   bool stopThread_ = false;   // Flag to stop the thread
+  bool enableSend_ = true;    // Flag to enable/disable UDP sending
 };
 
 }  // namespace legged

@@ -12,6 +12,7 @@ find_package(catkin REQUIRED
         roscpp
         legged_hw
         fdsc_utils
+        unitree_legged_msgs
 )
 
 catkin_package(
@@ -21,6 +22,7 @@ catkin_package(
         roscpp
         legged_hw
         fdsc_utils
+        unitree_legged_msgs
 )
 include_directories(
         include
